@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>社工的一天</title>
+<style>
+:root{
+  --cream:#f6efe2; --paper:#fffaf0; --sand:#ead9bc; --sand-d:#d8c3a0;
+  --green:#6f9d7e; --green-d:#3f6b52; --green-l:#e1eedf;
+  --orange:#d9894a; --orange-d:#b86a30; --orange-l:#f8e2c8;
+  --brown:#8a5a3b; --brown-d:#5e3d27;
+  --ink:#3b2f27; --muted:#7a6a5c; --red:#c2573f; --red-l:#f7ddd5;
+  --shadow:0 6px 18px rgba(94,61,39,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;background:var(--cream);color:var(--ink);line-height:1.7;font-size:16px}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;border:none;background:none}
+[hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+.card{background:var(--paper);border:2px solid var(--sand);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+.fade{animation:fadeIn .45s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:clamp(27px,6vw,38px);line-height:1.25;color:var(--brown-d);letter-spacing:.04em}
+h2{font-size:21px;color:var(--brown-d);margin-bottom:8px}
+h3{font-size:17px;color:var(--brown-d);margin-bottom:4px}
+.eyebrow{color:var(--green-d);font-weight:700;letter-spacing:.1em;font-size:13.5px}
+.mt{margin-top:14px}.mt2{margin-top:24px}.center{text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 26px;border-radius:999px;background:var(--green-d);color:#fff;font-weight:700;font-size:17px;box-shadow:0 4px 0 #2c4d3a;transition:transform .12s,box-shadow .12s,background .2s}
+.btn:hover{background:#4a7b60}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #2c4d3a}
+.btn.orange{background:var(--orange-d);box-shadow:0 4px 0 #8a4f22}
+.btn.orange:hover{background:#c97a3b}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.notice{font-size:13px;color:var(--muted);background:var(--orange-l);border-radius:12px;padding:10px 14px;margin-top:14px}
+.warnbox{font-size:14px;color:#7a3a28;background:var(--red-l);border:2px solid #e8b4a6;border-radius:14px;padding:10px 14px;margin-top:14px}
+.warnbox b{display:block;margin-bottom:2px}
+.hero{font-size:64px;text-align:center;line-height:1.2;margin:6px 0}
+.story p{margin:9px 0}
+
+/* 狀態欄 */
+#hud{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:2px solid var(--sand);padding:8px 10px 7px;box-shadow:0 3px 10px rgba(94,61,39,.1)}
+.hud-in{max-width:760px;margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:#fff;border:2px solid var(--sand);border-radius:12px;padding:5px 10px 6px;min-width:0;transition:background .3s,border-color .3s}
+.stat small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.stat b{display:block;font-size:17px;line-height:1.3;color:var(--brown-d);white-space:nowrap}
+.stat.over{border-color:var(--red);background:#fff4ef}.stat.over b{color:var(--red)}
+.stat.pulse{animation:pulse .7s}
+@keyframes pulse{0%{transform:scale(1)}30%{transform:scale(1.06);background:var(--orange-l)}100%{transform:scale(1)}}
+.steps{display:flex;gap:5px;margin-top:7px}
+.step{flex:1;text-align:center;font-size:11px;padding:2px 0;border-radius:8px;background:var(--sand);color:var(--muted)}
+.step.done{background:var(--green-l);color:var(--green-d)}
+.step.cur{background:var(--orange-d);color:#fff;font-weight:800}
+
+/* 情境 */
+.scene-head{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,var(--green-l),var(--paper))}
+.scene-head .emo{font-size:46px;line-height:1;flex:none}
+.scene-head .tm{font-weight:800;color:var(--orange-d);font-size:15px}
+.scene-head .pl{font-size:13px;color:var(--muted)}
+.dlg{margin-top:12px}
+.bubble{background:var(--paper);border:2px solid var(--sand);border-radius:16px;padding:10px 14px;margin:0 0 10px;box-shadow:0 3px 8px rgba(94,61,39,.08);animation:fadeIn .35s both}
+.bubble .who{font-size:12.5px;font-weight:800;color:var(--green-d);letter-spacing:.05em}
+.bubble.nar{background:#f3ead7;border-style:dashed}.bubble.nar .who{color:var(--muted)}
+.bubble.me{background:var(--green-l);border-color:#bcd6bd}.bubble.me p{font-style:italic}
+.bubble.alert{background:var(--orange-l);border-color:var(--orange)}.bubble.alert .who{color:var(--orange-d)}
+.bubble.danger{background:var(--red-l);border-color:#e0a595}.bubble.danger .who{color:var(--red)}
+.hintline{font-size:12.5px;color:var(--muted);text-align:center;margin:2px 0 8px}
+
+/* 桌面道具 */
+.desk{background:linear-gradient(180deg,#c99a67,#b9824f);border:3px solid #a06d3f;border-radius:18px;padding:12px 12px 14px;margin:10px 0 14px;box-shadow:inset 0 2px 8px rgba(0,0,0,.18);animation:fadeIn .4s both}
+.desk-t{font-size:13.5px;color:#fff7e8;font-weight:700;margin-bottom:8px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.props{display:flex;gap:12px;flex-wrap:wrap}
+.prop{flex:1 1 150px;min-height:92px;background:#fffdf3;border:2px solid #e6d5b0;border-radius:6px;padding:10px 12px;text-align:center;box-shadow:0 4px 8px rgba(0,0,0,.25);transition:transform .15s}
+.prop:nth-child(odd){transform:rotate(-1.6deg)}.prop:nth-child(even){transform:rotate(1.4deg)}
+.prop:hover{transform:rotate(0) scale(1.03)}
+.prop .pi{display:block;font-size:30px;line-height:1.2}
+.prop .pn{display:block;font-weight:800;color:var(--brown-d);font-size:15px}
+.prop .pt{display:block;font-size:12px;color:var(--orange-d);font-weight:700}
+.prop.req{border-color:var(--orange);animation:nudge 1.4s ease-in-out infinite}
+@keyframes nudge{50%{box-shadow:0 0 0 6px rgba(217,137,74,.35),0 4px 8px rgba(0,0,0,.25)}}
+.prop.seen{opacity:.85;animation:none}.prop.seen .pt{color:var(--green-d)}
+
+.must{background:#fff;border:2px dashed var(--green);border-radius:14px;padding:10px 14px;margin:6px 0 12px;font-size:14px;animation:fadeIn .4s both}
+.must b{color:var(--green-d)}.must ul{margin:4px 0 0 20px}
+.ctitle{font-weight:800;color:var(--brown-d);margin:8px 2px}
+.choice{display:block;width:100%;text-align:left;background:var(--paper);border:2.5px solid var(--sand-d);border-radius:16px;padding:12px 14px 12px 54px;margin:0 0 10px;position:relative;min-height:64px;box-shadow:0 3px 0 var(--sand-d);transition:transform .12s,border-color .15s,background .15s;animation:fadeIn .4s both}
+.choice:hover{border-color:var(--green);background:#fbfff7}
+.choice:active{transform:translateY(2px);box-shadow:0 1px 0 var(--sand-d)}
+.choice .ltr{position:absolute;left:12px;top:12px;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.choice strong{display:block;font-size:16.5px;color:var(--brown-d);line-height:1.5}
+.choice .d{display:block;font-size:14px;margin-top:3px}
+.choice .m{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
+.choice.chosen{border-color:var(--orange-d);background:var(--orange-l)}.choice.chosen .ltr{background:var(--orange-d)}
+.choice.dim{opacity:.4;pointer-events:none}
+
+/* 彈窗 */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(59,47,39,.58);display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeBg .3s both}
+.modal.center{align-items:center;padding:14px}
+@keyframes fadeBg{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--paper);width:100%;max-width:640px;max-height:92dvh;overflow-y:auto;border-radius:22px 22px 0 0;padding:20px 18px 26px;border:2px solid var(--sand-d);animation:sheetUp .4s ease both}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:700px){.modal{align-items:center;padding:20px}.sheet{border-radius:22px}}
+.sheet h2{color:var(--green-d)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{border-radius:999px;padding:3px 12px;font-weight:800;font-size:14px;border:2px solid var(--sand-d);background:#fff}
+.chip.bad{border-color:var(--red);color:var(--red);background:var(--red-l)}
+.box{border-radius:14px;padding:10px 14px;margin:10px 0;font-size:15px}
+.box h4{font-size:14px;margin-bottom:2px}
+.box.res{background:#fff;border:2px solid var(--sand)}
+.box.ref{background:var(--green-l)}.box.ref h4{color:var(--green-d)}
+.box.lim{background:var(--orange-l)}.box.lim h4{color:var(--orange-d)}
+.bfly{font-size:13.5px;color:var(--muted);text-align:center;margin:8px 0}
+
+/* 證物紙張 */
+.sheet.paper{background:#fffdf3;background-image:repeating-linear-gradient(transparent,transparent 31px,#e9dfc3 32px);border-color:#e1d3ac}
+.paper .pt-t{font-size:20px;font-weight:800;color:var(--brown-d);margin-bottom:8px}
+.paper .entry{margin:10px 0;padding:8px 10px;background:rgba(255,255,255,.75);border-left:4px solid var(--orange);border-radius:6px}
+.paper .entry b{color:var(--orange-d)}
+.paper .art{border:3px solid #e1d3ac;border-radius:8px;overflow:hidden;background:#fffdf3;margin:6px 0}
+.paper .art svg{display:block;width:100%;height:auto}
+.paper .pnote{margin-top:10px;font-size:14.5px;color:var(--brown-d);background:var(--orange-l);border-radius:10px;padding:8px 12px}
+
+/* 手機訊息 */
+.phone{width:100%;max-width:360px;background:#fff;border-radius:30px;border:7px solid #2d2d2d;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:sheetUp .4s both}
+.ph-top{background:var(--green-d);color:#fff;padding:12px 16px;font-weight:700;display:flex;justify-content:space-between}
+.ph-body{background:#e9eef2;min-height:300px;max-height:56dvh;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.msg{align-self:flex-start;max-width:82%;background:#fff;border-radius:4px 16px 16px 16px;padding:8px 12px;font-size:15px;box-shadow:0 1px 3px rgba(0,0,0,.15);animation:fadeIn .3s both}
+.ph-foot{background:#fff;padding:10px;text-align:center;min-height:62px}
+.ringing{margin:auto;text-align:center;font-size:20px;font-weight:700;color:var(--brown-d);animation:ringShake .5s infinite}
+.ringing small{font-weight:400;color:var(--muted);font-size:14px}
+.ringing .big{font-size:54px;display:block}
+@keyframes ringShake{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+
+/* 問卷 */
+.q{margin:16px 0;padding:14px;border-radius:14px;background:#fff;border:2px solid var(--sand)}
+.q p{font-weight:700;margin-bottom:10px}
+.likert{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lk{min-height:56px;border-radius:12px;border:2px solid var(--sand-d);background:var(--paper);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:4px 2px;transition:.15s}
+.lk small{font-size:10.5px;font-weight:400;color:var(--muted);margin-top:2px}
+.lk:hover{border-color:var(--green)}
+.lk.sel{background:var(--green);border-color:var(--green-d);color:#fff}.lk.sel small{color:#eaf5ec}
+textarea{width:100%;min-height:110px;border-radius:12px;border:2px solid var(--sand-d);padding:10px 12px;font-family:inherit;font-size:16px;background:#fff;color:var(--ink);resize:vertical}
+
+/* 結局 */
+.end-hero{text-align:center;background:linear-gradient(180deg,var(--green-l),var(--paper))}
+.end-hero .badge{font-size:50px}
+.endstats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.chain{margin:10px 0;padding:12px 14px;background:#fff;border:2px solid var(--sand);border-radius:14px}
+.chain .rt{font-weight:800;color:var(--brown-d)}
+.chain .rc{color:var(--green-d);font-weight:700;margin:2px 0}
+.chain p{font-size:14.5px;margin-top:3px}
+.flagcard{margin:10px 0;padding:12px 14px;border-radius:14px;border:2px solid var(--sand);background:#fff}
+.flagcard.on{border-color:var(--orange);background:#fffaf2}
+.flagcard.good{border-color:var(--green);background:#f6fbf4}
+.flagcard .fh{display:flex;justify-content:space-between;gap:8px;font-weight:800;color:var(--brown-d);flex-wrap:wrap}
+.flagcard .st{font-size:13px;font-weight:700;padding:1px 10px;border-radius:999px;background:var(--sand)}
+.flagcard.on .st{background:var(--orange-l);color:var(--orange-d)}
+.flagcard.good .st{background:var(--green-l);color:var(--green-d)}
+.flagcard p{font-size:14.5px;margin-top:4px}
+.know{display:grid;gap:10px}
+.know div{background:#fff;border:2px solid var(--sand);border-radius:14px;padding:10px 14px}
+.know b{color:var(--green-d)}.know p{font-size:14.5px;margin-top:2px}
+table.cmp{width:100%;border-collapse:collapse;font-size:14.5px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--sand);padding:8px 6px;text-align:center}
+table.cmp td:first-child,table.cmp th:first-child{text-align:left}
+.flag-demo{background:var(--red-l);border:2px solid var(--red);color:#8a3a27;border-radius:14px;padding:10px 14px;font-weight:800;text-align:center;margin:16px 0}
+.adv li{margin:8px 0 8px 20px}
+
+/* 過場 */
+#curtain{position:fixed;inset:0;z-index:50;background:linear-gradient(160deg,#3f6b52,#2f5240);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .45s;text-align:center;padding:20px}
+#curtain.in{opacity:1;pointer-events:auto}
+#curtain .ct{font-size:clamp(48px,14vw,84px);font-weight:800;letter-spacing:.05em;animation:rise .7s both}
+#curtain .cn{font-size:20px;margin-top:6px;animation:rise .7s .15s both}
+#curtain .cs{font-size:14px;margin-top:10px;opacity:.8;animation:rise .7s .3s both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (max-width:480px){
+  body{font-size:15.5px}
+  .btn{font-size:16px;padding:12px 20px}
+  .lk small{font-size:9.5px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header id="hud" hidden></header>
+<main id="screen"></main>
+<div id="modal" class="modal" hidden></div>
+<div id="curtain"><div class="ct" id="ctT"></div><div class="cn" id="ctN"></div><div class="cs" id="ctS"></div></div>
+
+<script>
+/* =====================================================================
+   GAME_DATABASE：遊戲狀態、隱藏標籤、五個情境、道具、LINE 訊息、結局與所有介面文字。
+   想改文案、數值或連鎖規則，只需要改這個物件。
+   ===================================================================== */
+const GAME_DATABASE={
+  meta:{title:'社工的一天',delayMs:900,phoneDelayMs:950},
+
+  /* 初始狀態（時間單位：小時） */
+  initialState:{
+    timeRemaining:8,
+    supportPoints:3,
+    flags:{care_risk:false,worker_endangered:false,wrong_accusation:false,trust_built:false,youth_closed:false}
+  },
+
+  speakers:{
+    nar:{name:'旁白'},
+    me:{name:'你的心聲'},
+    sitter:{name:'陳阿姨（保母）'},
+    child:{name:'7 歲的孩子'},
+    youth:{name:'阿哲（少年）'}
+  },
+
+  survey:{
+    scale:['非常不同意','不同意','普通','同意','非常同意'],
+    likert:[
+      {key:'q1',text:'我知道社工一天要處理很多事，而且常常得在時間不夠的情況下做決定。'},
+      {key:'q2',text:'我知道社工在決定怎麼做之前，要同時考慮很多事情（例如孩子的安全、家人的感受、能找到的幫手）。'}
+    ],
+    open:'玩完之後，你對社工的工作，有什麼新的想法或感想？',
+    openPlaceholder:'想到什麼就寫什麼，也可以留白'
+  },
+
+  ui:{
+    start:{
+      eyebrow:'互動體驗遊戲',
+      hero:'🦋',
+      title:'社工的一天：<br>你會怎麼選？',
+      intro:[
+        '你是一位社工，工作是陪伴遇到困難的孩子和家庭，也要在孩子可能有危險的時候，趕快做出決定。',
+        '今天從早上九點到傍晚五點，你會遇到五件彼此牽連的事。你可以翻看桌上的東西、接手機訊息，再決定怎麼做。',
+        '這一次，遊戲不會馬上告訴你「對」或「錯」。有些決定的影響，要等到更晚的時候才會出現。',
+        '你有 8 小時，還有 3 份「支援」。支援就是可以請同事、主管或其他單位幫忙的機會，用完就沒有了。'
+      ],
+      warnTitle:'先跟你說一聲',
+      warn:'遊戲裡有虛構的孩子受傷、家庭暴力、孩子被疑似傷害、少年吸毒，以及孩子情緒失控的情節（沒有細節描寫）。如果覺得不舒服，隨時可以關閉頁面。',
+      resources:'如果你或身邊的人需要找人聊聊，可以撥打安心專線 1925（24 小時）；遇到家庭暴力或孩子有危險，可以撥打保護專線 113，緊急時請撥 110。',
+      begin:'開始 ▶',
+      disclaimer:'※ 這是教育用的模擬遊戲，所有人物與故事都是虛構的，情節也經過簡化，不能當成真正的工作指南。真實情況請以最新法規、機構規定與專業人員的指導為準。'
+    },
+    pre:{eyebrow:'開始前 ・ 2 個小問題',title:'你現在了解多少？',desc:'請照你現在的真實感覺回答（1＝非常不同意，5＝非常同意）。答案只會留在你的瀏覽器裡。',next:'進入今天的工作 ▶'},
+    hud:{time:'⏱ 剩餘時間',support:'🤝 可用支援',supportUnit:' 份'},
+    game:{
+      sceneOf:'第 {n} / {total} 件事',
+      deskTitle:'📎 桌上的東西（點一點看看，不會花時間）',
+      deskTitleLine:'📎 手機',
+      skipHint:'輕點對話區，可以直接看完全部',
+      choiceTitle:'你會怎麼做？',
+      estimate:'大概會花 {t}',
+      supportCost:'，並用掉 {s} 份支援',
+      seen:'已看過 ✔',
+      faceMoment:'面對這一刻 ▶',
+      seeFeedback:'看看發生了什麼 ▶'
+    },
+    phone:{calling:'來電中…',answer:'接聽',close:'關閉手機'},
+    paper:{close:'放回桌上'},
+    modal:{
+      title:'這個決定之後',
+      happened:'發生了什麼',
+      reflect:'想一想',
+      limit:'現實的難處',
+      changes:'你付出的',
+      timeChip:'時間 −{t}',
+      supportChip:'支援 −{s} 份',
+      noChange:'沒有用掉支援',
+      butterfly:'🦋 有些影響，不一定馬上看得到。',
+      next:'繼續下一件事 ▶',
+      last:'今天結束了 ▶'
+    },
+    curtain:{endTime:'18:00',endTitle:'一天結束了',endSub:'一起回頭看看今天的選擇'},
+    post:{eyebrow:'一天結束 ・ 再回答一次',title:'現在的你，怎麼想？',desc:'請再回答一次同樣的 2 題，並寫下一點感想（1＝非常不同意，5＝非常同意）。',next:'看看我的結果 ▶'},
+    ending:{
+      eyebrow:'你的這一天',
+      notScore:'這不是分數，也不是考試成績，只是依照你今天的選擇，呈現的其中一種結果，也不代表任何真實案件。',
+      thoughtTitle:'🔍 想一想',
+      pathTitle:'🧭 你今天走過的路',
+      pathLabel:'你的選擇：',
+      costLabel:'花掉：',
+      propsLabel:'做決定前，你看了 {a} / {b} 樣東西。',
+      flagTitle:'🌱 悄悄留下來的小種子',
+      flagIntro:'下面是今天悄悄累積的幾顆「小種子」。它們不是在打分數，而是讓你看見：一個當下的決定，怎麼在稍後的時刻產生影響。',
+      settleTitle:'📊 今天的結算',
+      settleTime:'剩下的時間',
+      settleSupport:'剩下的支援',
+      surveyTitle:'📋 你前後的回答',
+      surveyHead:['題目','之前','之後','變化'],
+      openLabel:'你的感想：',
+      openEmpty:'（沒有填寫）',
+      localNote:'你的回答只存在你的瀏覽器裡，沒有送到任何地方。',
+      advTitle:'📣 想對你說的話',
+      knowTitle:'📚 小知識',
+      demoFlag:'這是示範版本，尚未進行資料回收',
+      disclaimer:'這是教育用的模擬遊戲，所有人物與故事都是虛構的，情節也經過簡化，不能當成真正的工作指南。真實情況請以最新法規、機構規定與專業人員的指導為準。',
+      restart:'🔄 重新開始'
+    }
+  },
+
+  /* ---------------- 五個連鎖情境（cost.time 單位：小時） ----------------
+     props：桌面證物（paper）或手機訊息（line）；required 為 true 時，必須先點開才會出現選項。
+     afterLines：道具看完之後才顯示的劇情。                                          */
+  scenes:[
+    {
+      id:1,time:'09:00',emoji:'🧸',title:'保母家探視：額頭上的傷',place:'保母家（虛構）',
+      lines:[
+        {s:'nar',t:'你來到保母家，探視一個之後要被安排到長期新家庭的小朋友。他安安靜靜地坐在沙發角落，額頭上有一塊很明顯的瘀青。'},
+        {s:'sitter',t:'哎呀，昨天玩玩具不小心撞到桌角啦！我有擦藥了，小孩子嘛，跌跌撞撞很正常。'},
+        {s:'me',t:'（保母笑得很親切，但小朋友一直低著頭，沒有看我。這樣的瘀青，真的是撞到桌角嗎？還是我想太多了？）'},
+        {s:'nar',t:'桌上放著保母的照顧日記，還有孩子畫的一張圖。你可以先翻翻看，不會花你的時間。'}
+      ],
+      reminders:['看到孩子身上有傷，一定要拍照記錄，也要確認孩子現在是安全的。這些不會因為你的選擇而省略。'],
+      props:[
+        {id:'diary',type:'paper',icon:'📒',label:'保母的照顧日記',tag:'點一下翻開',required:false,
+         title:'📒 保母的照顧日記',
+         entries:[
+           {h:'週一',t:'今天胃口很好，吃了兩碗稀飯，午覺睡很久。'},
+           {h:'週二',t:'下午帶他去公園玩溜滑梯，很開心，笑得很大聲。'},
+           {h:'週三（昨天）',t:'在家看電視、玩積木，沒有出門。晚上不肯睡，哭了很久，我有點累，說了他幾句。'}
+         ],
+         note:'你發現：昨天這一頁，沒有寫到任何撞到或擦藥的事。不過，也可能只是保母忘記寫了。'},
+        {id:'drawing',type:'paper',icon:'🖍️',label:'孩子畫的圖',tag:'點一下拿起來看',required:false,
+         title:'🖍️ 孩子畫的圖',
+         art:'<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#fffdf3"/><circle cx="252" cy="34" r="17" fill="#f9d44a"/><path d="M262 34 h14 M252 58 v12 M228 34 h-12 M236 16 l-8 -8 M268 16 l8 -8" stroke="#f9d44a" stroke-width="3" stroke-linecap="round"/><path d="M14 188 H286" stroke="#7cb26e" stroke-width="7" stroke-linecap="round"/><circle cx="90" cy="70" r="25" fill="#f6b3a0" stroke="#e0604a" stroke-width="3"/><path d="M75 60 L87 67 M105 60 L93 67" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/><circle cx="82" cy="72" r="2.5" fill="#7a2d22"/><circle cx="98" cy="72" r="2.5" fill="#7a2d22"/><path d="M80 87 Q90 79 100 87" stroke="#c0392b" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M90 95 V150 M90 110 L62 134 M90 110 L120 126 M90 150 L74 186 M90 150 L106 186" stroke="#e0604a" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="200" cy="132" r="14" fill="#cfe3f7" stroke="#4a7fb5" stroke-width="3"/><circle cx="195" cy="130" r="2" fill="#2f4f73"/><circle cx="205" cy="130" r="2" fill="#2f4f73"/><path d="M193 140 q-3 8 0 13 M207 140 q3 8 0 13" stroke="#4a90d9" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M200 146 V172 M200 156 L185 168 M200 156 L215 168 M200 172 L190 188 M200 172 L210 188" stroke="#4a7fb5" stroke-width="3" fill="none" stroke-linecap="round"/><text x="150" y="22" font-size="15" text-anchor="middle" fill="#7a6a5c" font-weight="700">我跟阿姨</text></svg>',
+         note:'孩子寫的標題是「我跟阿姨」。畫裡的大人臉紅紅的，小朋友在哭。不過，小朋友的畫可以有很多種解讀，不能只靠一張畫就下結論。'}
+      ],
+      choices:[
+        {
+          id:'1',label:'「好，那我先拍照記錄下來，這兩天再麻煩您多注意他的狀況。」',
+          desc:'你拍下傷口，請保母這兩天多留意，然後繼續今天的行程。',
+          cost:{time:1,support:0},setFlags:{care_risk:true},
+          feedback:'你把傷口拍了下來，也請保母多注意，然後離開。一路上，你的心裡一直有點不踏實：那塊瘀青，真的只是撞到嗎？',
+          reflect:'拍照記錄是必要的，但「記下來」不等於「弄清楚」。大人的說法只是線索之一，孩子的反應、傷口的位置、日記有沒有寫到，都值得多留意。',
+          limit:'行程很滿、時間有限，又沒有明確的證據，要不要多花時間查清楚，真的很難拿捏。'
+        },
+        {
+          id:'2',label:'「為了保險起見，我先帶孩子去醫院給醫生看看，順便和他單獨聊聊。」',
+          desc:'你想先帶孩子出門檢查，也想單獨聽聽孩子怎麼說。',
+          cost:{time:2.5,support:1},setFlags:{care_risk:false},
+          feedback:'保母的臉色有些難看，覺得你不相信她。但醫生檢查之後，你確認了孩子目前的狀況，也有機會單獨聽聽孩子怎麼說。',
+          reflect:'多花一點時間確認，孩子比較安全，也比較容易被聽見。用溫和的方式說明「這是例行做法」，也比較不會讓對方覺得被當成壞人。',
+          limit:'這個決定花了 2.5 小時，還用掉 1 份支援（例如請同事幫忙陪同）。這些，都是今天其他事情的時間與人手。'
+        }
+      ]
+    },
+    {
+      id:2,time:'10:30',emoji:'📱',title:'突發事件：爸爸要把孩子帶走',place:'社福中心外面（虛構）',
+      lines:[
+        {s:'nar',t:'你剛結束上午的工作，在中心外面整理資料。口袋裡的手機，突然瘋狂震動。'}
+      ],
+      props:[
+        {id:'call',type:'line',icon:'📱',label:'手機一直在響',tag:'點一下接聽',required:true,ring:true,
+         contact:'小馬（同事）',
+         messages:[
+           {t:'你在哪裡？！'},
+           {t:'那位以前有家暴紀錄的爸爸，突然衝過來了！'},
+           {t:'他把孩子拉上車了！車就停在中心外面！'},
+           {t:'引擎已經發動了，快！'}
+         ]}
+      ],
+      afterLines:[
+        {s:'nar',t:'你抬頭，真的看見一輛車停在不遠的地方。孩子被拉進後座，爸爸正要關上車門。你離車子，只剩幾步的距離。',kind:'danger'},
+        {s:'me',t:'（我只有幾秒鐘可以決定。）'}
+      ],
+      choices:[
+        {
+          id:'1',label:'趁車門還沒關上，立刻伸手抓住車門，硬擠上副駕駛座保護孩子。',
+          desc:'你不想讓孩子被帶走，用身體擋在車門前。',
+          cost:{time:3,support:0},setFlags:{worker_endangered:true},
+          feedback:'車門在你還沒坐穩時就被關上，你被強行載走，陷入險境。最後靠警察攔截才獲救，你整個人又累又嚇壞了。',
+          reflect:'想保護孩子的心情很真實。但當你自己也陷入危險，不只沒辦法保護孩子，還可能讓情況更複雜，需要更多人來救你。',
+          limit:'事情發生得太快，人在那個當下，本來就很難冷靜。這也是為什麼，除了個人勇氣，還需要平常的演練，以及身邊有人接住你。'
+        },
+        {
+          id:'2',label:'立刻掏出手機，記下車牌號碼與開車的方向，撥打 110 請警方攔截。',
+          desc:'你站在原地，把能看到的資訊清楚說給警方聽。',
+          cost:{time:1,support:1},setFlags:{worker_endangered:false},
+          feedback:'你保持冷靜，把車牌、車子的樣子和開走的方向清楚報給警方，也通知了兒少保護的單位。你沒辦法親手攔下那輛車，但孩子的安全，有被更多人接住。',
+          reflect:'在危險的時候，「不衝上去」不是退縮，而是讓真正擅長攔截的人去處理。清楚的資訊（車牌、方向、時間），就是你能幫上最大的忙。',
+          limit:'你沒辦法保證一定攔得到，等待結果的時候也很煎熬。這份無力感，也是這份工作的一部分。'
+        }
+      ]
+    },
+    {
+      id:3,time:'13:30',emoji:'🎨',title:'家庭糾紛：孩子的驚人發言',place:'安靜的談話小房間（虛構）',
+      lines:[
+        {s:'nar',t:'這是一個爸爸媽媽正在鬧離婚、爭取孩子照顧權的案子。你和 7 歲的孩子單獨待在一間安靜的小房間裡，桌上放著蠟筆和紙。'},
+        {s:'nar',t:'孩子畫著畫著，突然停下來，小聲對你說：'},
+        {s:'child',t:'媽媽晚上都會碰我的私密處……'},
+        {s:'nar',t:'你的心揪了一下。你知道，這句話非常嚴重；但你也知道，在爸媽爭奪孩子的時候，孩子有時會受到大人很大的影響。'},
+        {s:'me',t:'（我不能不當一回事，也不能太快下結論。我現在要說什麼？）'}
+      ],
+      reminders:['依照法律，聽到這種事，一定要通知負責保護孩子的單位。這一步不會因為你的選擇而省略；你能決定的，是接下來怎麼做。'],
+      choices:[
+        {
+          id:'1',label:'「這情況很嚴重，我要立刻通知保護孩子的單位，也先暫時不讓媽媽單獨跟孩子見面。」',
+          desc:'你想先把孩子保護起來，其他的事之後再說。',
+          cost:{time:1.5,support:0},setFlags:{wrong_accusation:true},
+          feedback:'孩子被保護起來了，你當下鬆了一口氣。但這個決定，是在還沒弄清楚事情之前做的，對孩子和家人的關係，都帶來很大的衝擊。',
+          reflect:'當孩子可能有立刻的危險時，保護行動不能拖。但「到底有沒有立刻的危險」，需要多方確認，不能只靠一句話或當下的情緒。太快做決定，也可能讓真相更難被看見。',
+          limit:'現場永遠沒有完整的資訊。太小心、太急都有代價，這也是為什麼這種事不能由一個人決定。'
+        },
+        {
+          id:'2',label:'「我們先不急著下結論，接下來多安排幾次，一起畫畫、聊天，慢慢了解情況。」',
+          desc:'你想讓孩子在安心的氣氛下，用自己的步調慢慢說。',
+          cost:{time:2,support:0},setFlags:{trust_built:true},
+          feedback:'幾次相處下來，孩子漸漸放鬆。第三次見面時，他小聲說：「是爸爸教我這樣講的，他說這樣才能常常見到爸爸……」',
+          reflect:'這只是虛構故事中的一種可能。孩子說的話，有時是真的，有時會受到大人影響，兩種都必須慎重對待。慢慢建立信任、請更多專業的人一起了解，才有機會看見比較完整的樣子。社工的角色，不是判斷「誰說謊」，而是幫忙讓孩子被好好聽見。',
+          limit:'慢慢來要花不少時間，過程中孩子和家人都在等待，孩子的安全也要一直留意。'
+        }
+      ]
+    },
+    {
+      id:4,time:'15:30',emoji:'🪑',title:'少年觀護所出來的少年：聊聊未來',place:'少年觀護所（虛構）',
+      lines:[
+        {s:'nar',t:'你來到少年觀護所（暫時安置犯錯少年的地方），要跟一位因為吸毒被送進來、這幾天就要出去的少年阿哲聊一聊。他斜躺在椅子上，一副不太在乎的樣子。'},
+        {s:'youth',t:'社工，我出去想去拍成人影片啦，感覺賺比較快。'},
+        {s:'me',t:'（他是在開玩笑嗎？還是真的這樣想？我要怎麼回他？）'},
+        {s:'nar',t:'桌上有一張他自己寫的紙。你可以先看看，不會花你的時間。'}
+      ],
+      props:[
+        {id:'plan',type:'paper',icon:'📝',label:'阿哲寫的紙',tag:'點一下看看',required:false,
+         title:'📝 阿哲寫的「出去之後要做的事」',
+         entries:[
+           {h:'1',t:'找地方住（不想回去以前那個地方）'},
+           {h:'2',t:'找工作，越快越好，要有錢'},
+           {h:'3',t:'不要再碰那個東西'},
+           {h:'4',t:'不要讓媽媽擔心'}
+         ],
+         note:'字寫得歪歪的，最後一行被塗掉過，又重新寫了一次。'}
+      ],
+      choices:[
+        {
+          id:'1',label:'「現在就業市場很現實，要不要先去考個技術證照、找個穩定工作比較好？」',
+          desc:'你想給他實際可行的建議。',
+          cost:{time:1,support:0},setFlags:{youth_closed:true},
+          feedback:'少年翻了個白眼說：「算了，隨便啦。」然後就不再多說了。你本來只是想給他實用的建議，卻讓他覺得自己的想法被一口否定。',
+          reflect:'出於好意的建議，有時聽起來像是「你的想法不對」。當對方還沒準備好被指點，再實用的話，也可能讓他把心門關上。',
+          limit:'時間很有限，想立刻給出有用的方向，是很自然的想法。要學會先聽再說，需要練習。'
+        },
+        {
+          id:'2',label:'「這行業眉角很多耶！你怎麼會突然想做這個？是想賺錢還是覺得有趣？」',
+          desc:'你想先聽聽他是怎麼想的。',
+          cost:{time:1.5,support:0},setFlags:{youth_closed:false},
+          feedback:'少年愣了一下，笑了笑，然後慢慢說出真心話：他很擔心出去之後找不到工作、沒有生活費，也怕再回到以前的朋友圈。',
+          reflect:'先問「為什麼」，不代表同意他的想法。之後你還是可以告訴他：未成年人不能做這類工作，那是法律在保護他，也有很多風險。但先聽懂他在擔心什麼，才有機會一起想辦法。',
+          limit:'好好聊需要更多時間，而且一次談話，沒辦法解決工作、住處、戒毒這些大問題。'
+        }
+      ]
+    },
+    {
+      id:5,time:'17:00',emoji:'🏠',title:'新家庭探視：突發的緊急狀況',place:'新家庭（虛構）',
+      lines:[
+        {s:'nar',t:'一天快結束了。你要去探視那個孩子的新家，看看他搬進來之後過得怎麼樣。'},
+        {s:'nar',t:'走到門口前，你的手機亮了。'}
+      ],
+      props:[
+        {id:'newparent',type:'line',icon:'💬',label:'新媽媽傳來訊息',tag:'點一下打開',required:true,ring:false,
+         contact:'新媽媽（孩子的新家）',
+         messages:[
+           {t:'老師，你到了嗎？'},
+           {t:'孩子剛剛突然變得很激動，現在躲在房間裡。'},
+           {t:'我們有點不知道該怎麼辦……'}
+         ]}
+      ],
+      afterLines:[
+        {s:'nar',t:'你一走進門，房間的門就被猛地推開。孩子手裡拿著一把玩具槍，另一隻手握著一把剪刀，衝了出來。',kind:'danger'}
+      ],
+      /* 頂點連鎖事件：依隱藏標籤決定走向。when 可用 all / any / none / timeBelow */
+      branches:[
+        {
+          id:'crisis',ending:'A',pathTitle:'危機爆發',
+          when:{any:['wrong_accusation','worker_endangered']},
+          cost:{time:2,support:0},
+          lines:[
+            {s:'nar',t:'孩子把玩具槍和剪刀對著前方，大喊：「走開！不要過來！」',kind:'danger'},
+            {s:'nar',t:'上午車子裡那驚險的畫面，還在你腦中不斷重播。你的手腳發冷，累了一整天的身體，幾乎不聽使喚。',when:{any:['worker_endangered']}},
+            {s:'nar',t:'下午那個太快做出的決定，也在你腦中打轉：如果又做錯了怎麼辦？你的壓力幾乎滿了出來。',when:{any:['wrong_accusation']}},
+            {s:'nar',t:'你因為前面一連串的打擊，又累又慌，一時反應不及，忍不住高聲尖叫。孩子被這聲尖叫嚇到，情緒整個炸開，場面頓時失控。新爸媽驚慌失措，也不知道怎麼辦。'},
+            {s:'nar',t:'時鐘早就超過下班時間了。',when:{timeBelow:0}},
+            {s:'nar',t:'這一次的探視，就在一片混亂中結束了。'}
+          ],
+          feedback:'你不是故意失控的。這是一個人在連續被打擊、又沒有喘息的情況下，很自然的反應。',
+          reflect:'孩子表現得很兇，常常是因為他很害怕。大人的情緒，也會直接影響現場。一連串的壓力、危險和疲累，如果沒有人接住，最後承受後果的，往往是孩子和整個家。',
+          limit:'這個結果不是哪一個決定的錯，而是一整天的壓力與不足，累積在一起。'
+        },
+        {
+          id:'resilience',ending:'B',pathTitle:'冷靜化解',
+          when:{all:['trust_built'],none:['worker_endangered','wrong_accusation','youth_closed']},
+          cost:{time:1,support:0},
+          lines:[
+            {s:'nar',t:'孩子把玩具槍和剪刀對著前方，大喊：「走開！不要過來！」',kind:'danger'},
+            {s:'nar',t:'你的心跳很快，但你想起今天一路走來：沒有衝動行事、願意慢下來聽人說話、也記得把該交給別人的事交給別人。'},
+            {s:'nar',t:'你深吸一口氣，放慢聲音，蹲下來，跟孩子一樣高，輕輕地說：「你現在一定很害怕對不對？我在這裡，我們慢慢來，沒有人會傷害你。」同時，你請新爸媽往後退一點，把危險的東西慢慢移開。'},
+            {s:'nar',t:'你也在心裡提醒自己：早上保母家那塊瘀青的疑慮，還沒有真的弄清楚，那件事你沒有忘記。',when:{any:['care_risk']}},
+            {s:'nar',t:'孩子慢慢放下了剪刀，哭了出來。你陪著他，也陪著驚魂未定的新爸媽，一起慢慢明白：孩子這樣，不是「壞」，而是他心裡有很多害怕。'}
+          ],
+          feedback:'你沒有解決孩子心裡所有的傷，但在這個最危急的時刻，你讓大家都平安度過，這個新家，也有機會繼續走下去。',
+          reflect:'穩定不是天生的。它來自今天每一次「先停一下」、「先弄清楚」、「請別人幫忙」的選擇，一點一點累積起來。',
+          limit:'穩定不能只靠一個人撐。如果沒有足夠的時間、幫手和身邊人的支持，這樣的狀態很難一直維持。'
+        },
+        {
+          id:'balance',ending:'C',pathTitle:'勉強維持平衡',
+          cost:{time:1.5,support:0},
+          lines:[
+            {s:'nar',t:'孩子握著剪刀和玩具槍，站在原地發抖，眼神很防備。你放慢腳步，用盡量平穩的聲音安撫他，也請新爸媽先退後。'},
+            {s:'nar',t:'你想起下午那位少年說到一半就不說話的樣子，心裡閃過一個念頭：很多時候，孩子需要的是先被聽見。',when:{any:['youth_closed']}},
+            {s:'nar',t:'你也想起早上那塊瘀青，那件事，其實還沒有真正弄清楚。',when:{any:['care_risk']}},
+            {s:'nar',t:'場面慢慢穩了下來，但你很清楚，自己也是在硬撐。時鐘早就超過下班時間，你知道自己又要加班了。',when:{timeBelow:0}},
+            {s:'nar',t:'孩子最後把東西放下了。你跟新爸媽解釋：孩子剛搬來，常常會用各種方式表達害怕，並約好下週再來看看。你沒有完美的答案，但盡力讓今天平安收場。'}
+          ],
+          feedback:'今天沒有大崩潰，也沒有完美的結局。更像是許多社工的日常：在有限的時間和幫手之下，努力維持平衡。',
+          reflect:'「平衡」不是不犯錯，而是每天都在取捨、調整。被擱在一邊的小事，不會自己消失，往往變成明天的負擔。',
+          limit:'資源有限，不代表可以降低標準。這也提醒我們，人手與工作量的問題，需要被更多人看見。'
+        }
+      ]
+    }
+  ],
+
+  /* ---------------- 結局 ---------------- */
+  endings:{
+    A:{
+      icon:'🌪️',title:'結局 A：連鎖崩潰與高壓實況',
+      summary:'這一天的壓力與風險，一件接著一件疊上來，最後在最脆弱的那一刻爆發。這不是某一個人的失敗，而是高壓、人手不足，再加上沒有喘息的時間，讓錯誤變得更容易發生。',
+      takeaways:[
+        '衝動的保護，或太急著做決定，常常是出於真心的關心，但也可能讓自己與孩子一起承擔更大的風險。',
+        '當身體與心都累到極限，人的情緒會直接影響現場。休息、請人幫忙，不是偷懶，而是讓大家都更安全的一部分。',
+        '回頭看你走過的路：哪一個轉折點，如果有人接住你、或多一點時間，也許會不一樣？'
+      ]
+    },
+    B:{
+      icon:'🌿',title:'結局 B：界線守護與系統韌性',
+      summary:'你在好幾個關鍵時刻，選擇了「慢下來」、「弄清楚」和「請人幫忙」。這份穩定，讓你在最危急的時候，還有力氣好好回應。',
+      takeaways:[
+        '穩定不是天生的鎮定，而是一連串不衝動、願意確認、願意聆聽的選擇，累積出來的。',
+        '守住自己的界線，並不是冷漠：它保護了你，也保護了你想幫助的人。',
+        '但也請記得，這樣的穩定需要時間、幫手和制度的支持。如果這些不存在，再好的個人，也很難一直撐下去。'
+      ]
+    },
+    C:{
+      icon:'⚖️',title:'結局 C：動態平衡的日常',
+      summary:'你這一天不斷在取捨，沒有戲劇性的崩潰，也沒有完美的結局。有些事被處理了，有些事被留到明天。這就是許多社工的日常。',
+      takeaways:[
+        '平衡不是完美，而是在有限的條件下，持續調整、持續承擔。',
+        '被擱置的小事，不會自己消失。把它們說出來，讓身邊的人知道，比一個人默默扛著更重要。',
+        '回頭看你走過的路：哪些選擇換來了時間？哪些選擇換來了信任或幫手？'
+      ]
+    }
+  },
+
+  /* 小種子（隱藏標籤）揭曉：on / off 是該標籤有沒有被觸發時的說明 */
+  flagReview:[
+    {key:'care_risk',label:'對保母家的疑慮，沒有查清楚',kind:'risk',stOn:'🔸 留下了',stOff:'✅ 沒有留下',
+     on:'一開始你選擇相信保母、記錄之後繼續行程。那個疑慮沒有被查清楚，也沒有被真的放下，像一顆種子，悄悄留在你這一天的背景裡。',
+     off:'一開始你選擇帶孩子去醫院，也單獨聽聽他怎麼說。孩子比較安全，你也少背了一個沒解開的疑慮，代價是時間與一份支援。'},
+    {key:'worker_endangered',label:'衝上去擋車，讓自己陷入危險',kind:'risk',stOn:'🔸 留下了',stOff:'✅ 沒有留下',
+     on:'上午你衝上車想保護孩子，讓自己陷入險境。這個經驗消耗了你的時間與力氣，也成為傍晚那一刻最重的負擔。',
+     off:'上午你冷靜地報警，把攔截交給警方，保住了自己的安全，也保住了之後做判斷的力氣。'},
+    {key:'wrong_accusation',label:'太快下結論',kind:'risk',stOn:'🔸 留下了',stOff:'✅ 沒有留下',
+     on:'下午你在還沒弄清楚之前，就做出了最強硬的處置。這個倉促的決定，增加了後面的不確定，也加重了你的壓力。',
+     off:'下午你沒有急著下結論，也沒有省略該做的通知，而是慢慢弄清楚，避免了倉促決定的風險。'},
+    {key:'trust_built',label:'讓孩子願意慢慢說出來',kind:'good',stOn:'🌱 長出來了',stOff:'— 還沒長出來',
+     on:'你花時間陪孩子，讓他有機會被聽見。這份「慢下來」的練習，也讓你在後面的時刻更有底氣。',
+     off:'你沒有走到這一步。信任需要時間，也需要有人允許你把時間花在這裡。'},
+    {key:'youth_closed',label:'不小心讓少年不想再說',kind:'risk',stOn:'🔸 留下了',stOff:'✅ 沒有留下',
+     on:'你用好意的建議回應少年，他卻把心門關上了；你也少了一次聽懂他真正擔心什麼的機會。',
+     off:'你用好奇的方式問他，少年才願意說出真正的擔心。'}
+  ],
+
+  advocacy:[
+    '遇到危險的時候，保護自己也是工作的一部分。社工的安全，不該只靠個人的勇氣，還需要平常的演練、清楚的做法，以及身邊有人接應。',
+    '要弄清楚一件事，需要時間。多問幾次、慢慢陪孩子，需要有人給這樣的時間，而不是只追求快。',
+    '社工不是一個人在工作。同事、主管、其他單位的幫忙，是讓服務更穩的重要力量，也值得被好好建立與保護。',
+    '當壓力大到一個人扛不住的時候，需要檢討的，往往是人手、工作量與制度，而不只是個人。',
+    '如果你對這份工作有興趣，歡迎多認識社工的團體與倡議，也可以參加志工或參訪活動，更近一點看看。'
+  ],
+
+  knowledge:[
+    {t:'看到孩子受傷，為什麼要多確認？',p:'孩子不一定會主動說出發生了什麼，大人的說法也可能不完整。拍照記錄、請醫生檢查、單獨聽聽孩子怎麼說，都是幫助大家看得更清楚的方法。依照法律，遇到孩子可能受到傷害的情形，一定要通知相關單位。（實際做法，請以最新法規與機構規定為準。）'},
+    {t:'遇到危險，先保護自己',p:'當情況可能出現暴力，優先確保自己和孩子的安全，並請警察與相關單位協助。社工不是救援人員，保護好自己，才有辦法繼續幫助更多人。'},
+    {t:'孩子說的話，要認真聽，也要多方確認',p:'孩子的話必須被認真對待，但也要由受過訓練的專業人員，用不引導的方式慢慢了解，避免讓孩子再次受到傷害。誰說的是真的，不應該由一個人單獨判斷。'},
+    {t:'先聽，再給建議',p:'很多少年的「奇怪想法」，背後其實是對生活的擔心。先聽懂他在怕什麼，他才比較願意聽你的建議。'},
+    {t:'工作量與幫手',p:'社工同時照顧很多個案，也要寫紀錄、開會、處理突發狀況。有足夠的人手與支持，才能讓每一次的決定，都有被好好思考的空間。'}
+  ]
+};
+</script>
+
+<script>
+/* ===================== 引擎：只負責規則與畫面，不含劇本文字 ===================== */
+const DB=GAME_DATABASE;
+const $=s=>document.querySelector(s);
+let playerState=null;
+let timers=[];
+
+function newPlayerState(){
+  const i=DB.initialState;
+  return {timeRemaining:i.timeRemaining,supportPoints:i.supportPoints,flags:Object.assign({},i.flags),
+    sceneIndex:0,history:[],endingKey:null,opened:{},advanced:{},pre:{},post:{}};
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(str,o){return str.replace(/\{(\w+)\}/g,(m,k)=>o[k]);}
+function clearTimers(){timers.forEach(clearTimeout);timers=[];}
+function fmtHours(h){
+  const neg=h<0,m=Math.round(Math.abs(h)*60),hh=Math.floor(m/60),mm=m%60;
+  let t=(hh?hh+' 小時':'')+(mm?(hh?' ':'')+mm+' 分':'');
+  if(!t)t='0 小時';
+  return neg?'加班 '+t:t;
+}
+function matches(c){
+  if(!c)return true;
+  const f=playerState.flags;
+  if(c.all&&!c.all.every(k=>f[k]===true))return false;
+  if(c.any&&!c.any.some(k=>f[k]===true))return false;
+  if(c.none&&!c.none.every(k=>f[k]===false))return false;
+  if(typeof c.timeBelow==='number'&&!(playerState.timeRemaining<c.timeBelow))return false;
+  return true;
+}
+function scrollEnd(){setTimeout(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}),40);}
+function setScreen(html){clearTimers();$('#screen').innerHTML=html;window.scrollTo(0,0);}
+function curtain(t,n,s,mid,end){
+  $('#ctT').textContent=t;$('#ctN').textContent=n;$('#ctS').textContent=s||'';
+  const c=$('#curtain');c.classList.remove('in');void c.offsetWidth;c.classList.add('in');
+  setTimeout(()=>{mid&&mid();},550);
+  setTimeout(()=>{c.classList.remove('in');end&&end();},1900);
+}
+
+/* ---------- 狀態欄（只顯示時間與支援） ---------- */
+function updateHud(pulseIds){
+  const u=DB.ui.hud,s=playerState;
+  const steps=DB.scenes.map((sc,i)=>'<span class="step '+(i<s.sceneIndex?'done':i===s.sceneIndex?'cur':'')+'">'+(i<s.sceneIndex?'✔ ':'')+esc(sc.time)+'</span>').join('');
+  const hud=$('#hud');hud.hidden=false;
+  hud.innerHTML='<div class="hud-in"><div class="stats">'+
+    '<div class="stat '+(s.timeRemaining<0?'over':'')+'" id="stT"><small>'+u.time+'</small><b>'+esc(fmtHours(s.timeRemaining))+'</b></div>'+
+    '<div class="stat" id="stS"><small>'+u.support+'</small><b>'+s.supportPoints+u.supportUnit+'</b></div>'+
+    '</div><div class="steps">'+steps+'</div></div>';
+  (pulseIds||[]).forEach(id=>{const e=$(id);if(e)e.classList.add('pulse');});
+}
+
+/* ---------- 開場與問卷 ---------- */
+function renderStart(){
+  const u=DB.ui.start;
+  $('#hud').hidden=true;
+  setScreen('<div class="wrap fade"><div class="hero">'+u.hero+'</div><p class="eyebrow center">'+esc(u.eyebrow)+'</p>'+
+    '<h1 class="center">'+u.title+'</h1>'+
+    '<div class="card story mt2">'+u.intro.map(p=>'<p>'+esc(p)+'</p>').join('')+'</div>'+
+    '<div class="warnbox"><b>'+esc(u.warnTitle)+'</b>'+esc(u.warn)+'<br><br>'+esc(u.resources)+'</div>'+
+    '<div class="center mt2"><button class="btn orange" id="btnBegin">'+esc(u.begin)+'</button></div>'+
+    '<p class="notice">'+esc(u.disclaimer)+'</p></div>');
+  $('#btnBegin').onclick=renderPre;
+}
+function likertHtml(){
+  return DB.survey.likert.map(q=>'<div class="q" data-k="'+q.key+'"><p>'+esc(q.text)+'</p><div class="likert">'+
+    DB.survey.scale.map((lab,i)=>'<button type="button" class="lk" data-v="'+(i+1)+'">'+(i+1)+'<small>'+esc(lab)+'</small></button>').join('')+'</div></div>').join('');
+}
+function bindLikert(store,onChange){
+  document.querySelectorAll('.q[data-k]').forEach(q=>{
+    q.querySelectorAll('.lk').forEach(b=>{
+      b.onclick=()=>{store[q.dataset.k]=+b.dataset.v;q.querySelectorAll('.lk').forEach(x=>x.classList.toggle('sel',x===b));onChange();};
+    });
+  });
+}
+function allAnswered(store){return DB.survey.likert.every(q=>store[q.key]);}
+function saveLocal(){try{localStorage.setItem('sw_props_demo',JSON.stringify({pre:playerState.pre,post:playerState.post}));}catch(e){}}
+function renderPre(){
+  const u=DB.ui.pre;
+  $('#hud').hidden=true;
+  setScreen('<div class="wrap fade"><p class="eyebrow">'+esc(u.eyebrow)+'</p><h2>'+esc(u.title)+'</h2><p>'+esc(u.desc)+'</p>'+likertHtml()+
+    '<div class="center mt"><button class="btn" id="btnPreGo" disabled>'+esc(u.next)+'</button></div></div>');
+  bindLikert(playerState.pre,()=>{$('#btnPreGo').disabled=!allAnswered(playerState.pre);});
+  $('#btnPreGo').onclick=()=>{saveLocal();goScene(0);};
+}
+
+/* ---------- 情境流程 ---------- */
+function goScene(i){
+  const sc=DB.scenes[i];
+  playerState.sceneIndex=i;
+  curtain(sc.time,sc.title,fmt(DB.ui.game.sceneOf,{n:i+1,total:DB.scenes.length}),()=>{renderScene(i);},null);
+}
+function bubble(line){
+  const sp=DB.speakers[line.s]||DB.speakers.nar;
+  const kind=line.kind?line.kind:(line.s==='nar'?'nar':line.s==='me'?'me':'');
+  const d=document.createElement('div');
+  d.className='bubble '+kind;
+  const who=document.createElement('div');who.className='who';who.textContent=sp.name;
+  const p=document.createElement('p');p.textContent=line.t;
+  d.appendChild(who);d.appendChild(p);
+  return d;
+}
+function revealSequence(container,lines,onDone){
+  let i=0,done=false;
+  const finish=()=>{
+    if(done)return;done=true;clearTimers();
+    while(i<lines.length){container.appendChild(bubble(lines[i++]));}
+    container.onclick=null;scrollEnd();onDone();
+  };
+  const step=()=>{
+    if(done)return;
+    if(i>=lines.length){done=true;container.onclick=null;onDone();return;}
+    container.appendChild(bubble(lines[i++]));scrollEnd();
+    timers.push(setTimeout(step,DB.meta.delayMs));
+  };
+  container.onclick=finish;
+  step();
+}
+function renderScene(i){
+  const sc=DB.scenes[i],g=DB.ui.game;
+  updateHud();
+  setScreen('<div class="wrap"><div class="card scene-head fade"><div class="emo">'+sc.emoji+'</div><div><div class="tm">'+esc(sc.time)+'　'+esc(fmt(g.sceneOf,{n:i+1,total:DB.scenes.length}))+'</div><h2 style="margin:0">'+esc(sc.title)+'</h2><div class="pl">'+esc(sc.place)+'</div></div></div>'+
+    '<div class="dlg" id="dlg"></div><div class="hintline" id="hintline">'+esc(g.skipHint)+'</div><div id="propsBox"></div><div id="actions"></div></div>');
+  const lines=sc.lines.filter(l=>matches(l.when));
+  revealSequence($('#dlg'),lines,()=>{$('#hintline').hidden=true;showProps(sc,i);});
+}
+
+/* ---------- 桌面道具：證物與手機訊息 ---------- */
+function showProps(sc,i){
+  if(sc.props&&sc.props.length){
+    const g=DB.ui.game,hasPaper=sc.props.some(p=>p.type==='paper');
+    $('#propsBox').innerHTML='<div class="desk"><div class="desk-t">'+esc(hasPaper?g.deskTitle:g.deskTitleLine)+'</div><div class="props">'+
+      sc.props.map(p=>'<button class="prop'+(p.required?' req':'')+'" data-id="'+p.id+'"><span class="pi">'+p.icon+'</span><span class="pn">'+esc(p.label)+'</span><span class="pt">'+esc(p.tag)+'</span></button>').join('')+'</div></div>';
+    sc.props.forEach(p=>{
+      const btn=document.querySelector('.prop[data-id="'+p.id+'"]');
+      btn.onclick=()=>openProp(sc,i,p,btn);
+    });
+    scrollEnd();
+  }
+  checkProps(sc,i);
+}
+function checkProps(sc,i){
+  const req=(sc.props||[]).filter(p=>p.required);
+  if(req.every(p=>playerState.opened[p.id]))advance(sc,i);
+}
+function advance(sc,i){
+  if(playerState.advanced[i])return;
+  playerState.advanced[i]=true;
+  const lines=(sc.afterLines||[]).filter(l=>matches(l.when));
+  if(lines.length)revealSequence($('#dlg'),lines,()=>{showActions(sc,i);});
+  else showActions(sc,i);
+}
+function openProp(sc,i,p,btn){
+  const el=$('#modal');
+  const finish=()=>{
+    el.hidden=true;el.innerHTML='';
+    playerState.opened[p.id]=true;
+    btn.classList.add('seen');btn.classList.remove('req');
+    btn.querySelector('.pt').textContent=DB.ui.game.seen;
+    checkProps(sc,i);
+  };
+  if(p.type==='paper'){
+    el.className='modal';
+    el.innerHTML='<div class="sheet paper"><div class="pt-t">'+esc(p.title)+'</div>'+
+      (p.art?'<div class="art">'+p.art+'</div>':'')+
+      (p.entries?p.entries.map(e=>'<div class="entry"><b>'+esc(e.h)+'</b><p>'+esc(e.t)+'</p></div>').join(''):'')+
+      (p.note?'<div class="pnote">'+esc(p.note)+'</div>':'')+
+      '<div class="center mt"><button class="btn" id="btnPaperClose">'+esc(DB.ui.paper.close)+'</button></div></div>';
+    el.hidden=false;
+    $('#btnPaperClose').onclick=finish;
+  }else{
+    openPhone(p,finish);
+  }
+}
+function openPhone(p,onClose){
+  const u=DB.ui.phone,el=$('#modal');
+  el.className='modal center';
+  el.innerHTML='<div class="phone"><div class="ph-top"><span>'+esc(p.contact)+'</span><span>LINE</span></div><div class="ph-body" id="phBody"></div><div class="ph-foot" id="phFoot"></div></div>';
+  el.hidden=false;
+  const body=$('#phBody'),foot=$('#phFoot');
+  const start=()=>{
+    body.innerHTML='';foot.innerHTML='';
+    let k=0;
+    const step=()=>{
+      if(k>=p.messages.length){
+        foot.innerHTML='<button class="btn orange" id="btnPhClose">'+esc(u.close)+'</button>';
+        $('#btnPhClose').onclick=onClose;
+        return;
+      }
+      const m=document.createElement('div');m.className='msg';m.textContent=p.messages[k++].t;
+      body.appendChild(m);body.scrollTop=body.scrollHeight;
+      timers.push(setTimeout(step,DB.meta.phoneDelayMs));
+    };
+    step();
+  };
+  if(p.ring){
+    body.innerHTML='<div class="ringing"><span class="big">📞</span>'+esc(p.contact)+'<br><small>'+esc(u.calling)+'</small></div>';
+    foot.innerHTML='<button class="btn" id="btnPhAnswer">'+esc(u.answer)+'</button>';
+    $('#btnPhAnswer').onclick=start;
+  }else start();
+}
+
+/* ---------- 選項與結果 ---------- */
+function propsSeen(sc){
+  const ps=sc.props||[];
+  return {a:ps.filter(p=>playerState.opened[p.id]).length,b:ps.length};
+}
+function showActions(sc,i){
+  const g=DB.ui.game,box=$('#actions');
+  let h='';
+  if(sc.reminders&&sc.reminders.length)h+='<div class="must"><ul>'+sc.reminders.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ul></div>';
+  if(sc.branches){
+    h+='<div class="center mt"><button class="btn orange" id="btnFace">'+esc(g.faceMoment)+'</button></div>';
+    box.innerHTML=h;
+    $('#btnFace').onclick=()=>faceMoment(sc,i);
+  }else{
+    h+='<div class="ctitle">'+esc(g.choiceTitle)+'</div><div id="choiceList"></div>';
+    box.innerHTML=h;
+    const list=$('#choiceList');
+    sc.choices.forEach((ch,k)=>{
+      const b=document.createElement('button');b.className='choice';
+      const est=fmt(g.estimate,{t:fmtHours(ch.cost.time)})+(ch.cost.support?fmt(g.supportCost,{s:ch.cost.support}):'');
+      b.innerHTML='<span class="ltr">'+(k+1)+'</span><strong></strong><span class="d"></span><span class="m"></span>';
+      b.querySelector('strong').textContent=ch.label;
+      b.querySelector('.d').textContent=ch.desc;
+      b.querySelector('.m').textContent=est;
+      b.onclick=()=>pickChoice(sc,i,k,list,b);
+      list.appendChild(b);
+    });
+  }
+  scrollEnd();
+}
+function applyCost(cost){
+  playerState.timeRemaining-=cost.time;
+  playerState.supportPoints=Math.max(0,playerState.supportPoints-(cost.support||0));
+}
+function pickChoice(sc,i,k,list,btn){
+  const ch=sc.choices[k],ps=propsSeen(sc);
+  list.querySelectorAll('.choice').forEach(b=>b.classList.add(b===btn?'chosen':'dim'));
+  applyCost(ch.cost);
+  Object.keys(ch.setFlags||{}).forEach(f=>{playerState.flags[f]=ch.setFlags[f];});
+  playerState.history.push({sceneIndex:i,time:sc.time,title:sc.title,label:ch.label,costTime:ch.cost.time,costSupport:ch.cost.support||0,propsA:ps.a,propsB:ps.b});
+  updateHud(['#stT','#stS']);
+  setTimeout(()=>showModal(ch,ch.cost,i),450);
+}
+function faceMoment(sc,i){
+  $('#actions').innerHTML='';
+  const br=sc.branches.find(b=>matches(b.when));
+  applyCost(br.cost);
+  playerState.endingKey=br.ending;
+  const ps=propsSeen(sc);
+  playerState.history.push({sceneIndex:i,time:sc.time,title:sc.title,label:br.pathTitle,costTime:br.cost.time,costSupport:br.cost.support||0,propsA:ps.a,propsB:ps.b});
+  updateHud(['#stT']);
+  const lines=br.lines.filter(l=>matches(l.when));
+  revealSequence($('#dlg'),lines,()=>{
+    const b=document.createElement('div');b.className='center mt';
+    b.innerHTML='<button class="btn orange" id="btnSee">'+esc(DB.ui.game.seeFeedback)+'</button>';
+    $('#actions').appendChild(b);
+    $('#btnSee').onclick=()=>showModal(br,br.cost,i);
+    scrollEnd();
+  });
+}
+function showModal(item,cost,i){
+  const m=DB.ui.modal,last=i===DB.scenes.length-1;
+  const chips=[];
+  if(cost.time)chips.push('<span class="chip bad">'+esc(fmt(m.timeChip,{t:fmtHours(cost.time)}))+'</span>');
+  if(cost.support)chips.push('<span class="chip bad">'+esc(fmt(m.supportChip,{s:cost.support}))+'</span>');
+  else chips.push('<span class="chip">'+esc(m.noChange)+'</span>');
+  const el=$('#modal');
+  el.className='modal';
+  el.innerHTML='<div class="sheet"><p class="eyebrow">'+esc(m.title)+'</p>'+
+    '<div class="box res"><h4>'+esc(m.happened)+'</h4><p>'+esc(item.feedback)+'</p></div>'+
+    '<div class="box ref"><h4>'+esc(m.reflect)+'</h4><p>'+esc(item.reflect)+'</p></div>'+
+    '<div class="box lim"><h4>'+esc(m.limit)+'</h4><p>'+esc(item.limit)+'</p></div>'+
+    '<h3 class="mt">'+esc(m.changes)+'</h3><div class="chips">'+chips.join('')+'</div>'+
+    (last?'':'<p class="bfly">'+esc(m.butterfly)+'</p>')+
+    '<div class="center mt"><button class="btn orange" id="btnModalNext">'+esc(last?m.last:m.next)+'</button></div></div>';
+  el.hidden=false;
+  $('#btnModalNext').onclick=()=>{
+    $('#btnModalNext').disabled=true;
+    el.hidden=true;el.innerHTML='';
+    if(last)finishDay();else goScene(i+1);
+  };
+}
+
+/* ---------- 後測與結局 ---------- */
+function finishDay(){
+  const c=DB.ui.curtain;
+  curtain(c.endTime,c.endTitle,c.endSub,()=>{renderPost();},null);
+}
+function renderPost(){
+  const u=DB.ui.post;
+  $('#hud').hidden=true;
+  setScreen('<div class="wrap fade"><p class="eyebrow">'+esc(u.eyebrow)+'</p><h2>'+esc(u.title)+'</h2><p>'+esc(u.desc)+'</p>'+likertHtml()+
+    '<div class="q"><p>'+esc(DB.survey.open)+'</p><textarea id="openText" placeholder="'+esc(DB.survey.openPlaceholder)+'"></textarea></div>'+
+    '<div class="center mt"><button class="btn orange" id="btnPostGo" disabled>'+esc(u.next)+'</button></div></div>');
+  bindLikert(playerState.post,()=>{$('#btnPostGo').disabled=!allAnswered(playerState.post);});
+  $('#btnPostGo').onclick=()=>{playerState.post.open=$('#openText').value.trim();saveLocal();renderEnding();};
+}
+function renderEnding(){
+  const u=DB.ui.ending,s=playerState,e=DB.endings[s.endingKey||'C'];
+  const sgn=v=>v>0?'+'+v:String(v);
+  let h='<div class="wrap fade">';
+  h+='<div class="card end-hero"><div class="badge">'+e.icon+'</div><p class="eyebrow">'+esc(u.eyebrow)+'</p><h1 style="font-size:clamp(24px,6vw,32px)">'+esc(e.title)+'</h1>'+
+     '<p class="mt">'+esc(e.summary)+'</p>'+
+     '<div class="endstats"><span class="chip">⏱ '+esc(fmtHours(s.timeRemaining))+'</span><span class="chip">🤝 '+s.supportPoints+DB.ui.hud.supportUnit+'</span></div>'+
+     '<p class="notice">'+esc(u.notScore)+'</p></div>';
+  h+='<div class="card mt2"><h2>'+esc(u.thoughtTitle)+'</h2>'+e.takeaways.map(t=>'<p class="mt">'+esc(t)+'</p>').join('')+'</div>';
+  h+='<div class="card mt2"><h2>'+esc(u.pathTitle)+'</h2>'+s.history.map(x=>
+     '<div class="chain"><div class="rt">'+esc(x.time)+'　'+esc(x.title)+'</div><div class="rc">'+esc(u.pathLabel)+esc(x.label)+'</div>'+
+     '<p>'+esc(u.costLabel)+esc(fmtHours(x.costTime))+(x.costSupport?'、'+x.costSupport+' 份支援':'')+'</p>'+
+     (x.propsB?'<p>'+esc(fmt(u.propsLabel,{a:x.propsA,b:x.propsB}))+'</p>':'')+'</div>').join('')+'</div>';
+  h+='<div class="card mt2"><h2>'+esc(u.flagTitle)+'</h2><p>'+esc(u.flagIntro)+'</p>'+DB.flagReview.map(f=>{
+     const on=s.flags[f.key]===true;
+     const cls=on?(f.kind==='good'?'good':'on'):(f.kind==='good'?'':'good');
+     return '<div class="flagcard '+cls+'"><div class="fh"><span>'+esc(f.label)+'</span><span class="st">'+esc(on?f.stOn:f.stOff)+'</span></div><p>'+esc(on?f.on:f.off)+'</p></div>';
+  }).join('')+'</div>';
+  h+='<div class="card mt2"><h2>'+esc(u.settleTitle)+'</h2><p>'+esc(u.settleTime)+'：<b>'+esc(fmtHours(s.timeRemaining))+'</b>；'+esc(u.settleSupport)+'：<b>'+s.supportPoints+DB.ui.hud.supportUnit+'</b></p></div>';
+  h+='<div class="card mt2"><h2>'+esc(u.surveyTitle)+'</h2><table class="cmp"><tr>'+u.surveyHead.map((t,i)=>'<th'+(i?'':' style="text-align:left"')+'>'+esc(t)+'</th>').join('')+'</tr>'+
+     DB.survey.likert.map(q=>'<tr><td>'+esc(q.text)+'</td><td>'+s.pre[q.key]+'</td><td>'+s.post[q.key]+'</td><td><b>'+sgn(s.post[q.key]-s.pre[q.key])+'</b></td></tr>').join('')+'</table>'+
+     '<p class="mt"><b>'+esc(u.openLabel)+'</b>'+(s.post.open?esc(s.post.open):'<span style="color:var(--muted)">'+esc(u.openEmpty)+'</span>')+'</p>'+
+     '<p class="notice">'+esc(u.localNote)+'</p></div>';
+  h+='<div class="card mt2"><h2>'+esc(u.advTitle)+'</h2><ul class="adv">'+DB.advocacy.map(a=>'<li>'+esc(a)+'</li>').join('')+'</ul></div>';
+  h+='<div class="card mt2"><h2>'+esc(u.knowTitle)+'</h2><div class="know">'+DB.knowledge.map(k=>'<div><b>'+esc(k.t)+'</b><p>'+esc(k.p)+'</p></div>').join('')+'</div></div>';
+  h+='<div class="flag-demo">'+esc(u.demoFlag)+'</div>';
+  h+='<div class="warnbox"><b>'+esc(DB.ui.start.warnTitle)+'</b>'+esc(DB.ui.start.resources)+'</div>';
+  h+='<p class="notice">'+esc(u.disclaimer)+'</p>';
+  h+='<div class="center mt2"><button class="btn orange" id="btnRestart">'+esc(u.restart)+'</button></div></div>';
+  setScreen(h);
+  $('#hud').hidden=true;
+  $('#btnRestart').onclick=()=>{playerState=newPlayerState();renderStart();};
+}
+
+/* ---------- 啟動 ---------- */
+document.title=DB.meta.title;
+playerState=newPlayerState();
+renderStart();
+</script>
+</body>
+</html>
